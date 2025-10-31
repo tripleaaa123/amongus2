@@ -21,6 +21,7 @@ export default function AccessoryPage() {
   const [alarmPlaying, setAlarmPlaying] = useState(false);
   const alarmAudioRef = useRef<HTMLAudioElement | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const timerActiveRef = useRef<boolean>(false);
 
   // Generate 3 random 2-digit addition puzzles
   const generatePuzzles = (): Puzzle[] => {
@@ -72,22 +73,6 @@ export default function AccessoryPage() {
           setPuzzles(newPuzzles);
           setTimeLeft(60);
           playAlarm();
-          
-          // Start countdown
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-          }
-          intervalRef.current = setInterval(() => {
-            setTimeLeft(prev => {
-              if (prev <= 1) {
-                clearInterval(intervalRef.current!);
-                endGame(gameId);
-                stopAlarm();
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
         }
 
         // When sabotage is resolved
@@ -95,6 +80,7 @@ export default function AccessoryPage() {
           stopAlarm();
           setPuzzles([]);
           setTimeLeft(60);
+          timerActiveRef.current = false;
           if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
@@ -111,6 +97,53 @@ export default function AccessoryPage() {
       stopAlarm();
     };
   }, [gameId, puzzles.length]);
+
+  // Separate useEffect for countdown timer
+  useEffect(() => {
+    // Only start timer when sabotage is ongoing, we have puzzles, and timer isn't already active
+    if (game?.sabotageOngoing && puzzles.length > 0 && !timerActiveRef.current) {
+      timerActiveRef.current = true;
+      
+      // Start countdown
+      intervalRef.current = setInterval(() => {
+        setTimeLeft(prev => {
+          const newTime = prev - 1;
+          
+          if (newTime <= 0) {
+            // Time's up!
+            timerActiveRef.current = false;
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current);
+              intervalRef.current = null;
+            }
+            endGame(gameId);
+            stopAlarm();
+            return 0;
+          }
+          
+          return newTime;
+        });
+      }, 1000);
+    }
+
+    // Stop timer if conditions aren't met
+    if (!game?.sabotageOngoing || puzzles.length === 0) {
+      timerActiveRef.current = false;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
+
+    // Cleanup
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      timerActiveRef.current = false;
+    };
+  }, [game?.sabotageOngoing, puzzles.length, gameId]);
 
   const updateAnswer = (index: number, value: string) => {
     // Only allow numbers
