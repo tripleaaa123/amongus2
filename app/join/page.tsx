@@ -11,13 +11,14 @@ export default function JoinGame() {
   const [nickname, setNickname] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isAccessory, setIsAccessory] = useState(false);
 
   const handleJoin = async () => {
     if (!gameCode.trim()) {
       setError('Please enter a game code');
       return;
     }
-    if (!nickname.trim()) {
+    if (!isAccessory && !nickname.trim()) {
       setError('Please enter a nickname');
       return;
     }
@@ -26,9 +27,13 @@ export default function JoinGame() {
     setError('');
 
     try {
-      const gameId = await joinGame(gameCode.trim().toUpperCase(), nickname.trim());
+      const gameId = await joinGame(gameCode.trim().toUpperCase(), nickname.trim(), isAccessory);
       if (gameId) {
-        router.push(`/game/${gameId}?playerId=${encodeURIComponent(nickname.trim())}`);
+        if (isAccessory) {
+          router.push(`/game/${gameId}/accessory`);
+        } else {
+          router.push(`/game/${gameId}?playerId=${encodeURIComponent(nickname.trim())}`);
+        }
       } else {
         setError('Game not found or game already started');
         setLoading(false);
@@ -56,17 +61,30 @@ export default function JoinGame() {
             style={{ textTransform: 'uppercase' }}
           />
         </div>
-        <div className={styles.inputGroup}>
-          <label htmlFor="nickname">Your Nickname</label>
-          <input
-            id="nickname"
-            type="text"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            placeholder="Enter your nickname"
-            maxLength={20}
-            disabled={loading}
-          />
+        {!isAccessory && (
+          <div className={styles.inputGroup}>
+            <label htmlFor="nickname">Your Nickname</label>
+            <input
+              id="nickname"
+              type="text"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              placeholder="Enter your nickname"
+              maxLength={20}
+              disabled={loading}
+            />
+          </div>
+        )}
+        <div className={styles.accessoryToggle}>
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              checked={isAccessory}
+              onChange={(e) => setIsAccessory(e.target.checked)}
+              disabled={loading}
+            />
+            <span>Join as Accessory</span>
+          </label>
         </div>
         {error && <div className={styles.error}>{error}</div>}
         <button 
@@ -74,7 +92,7 @@ export default function JoinGame() {
           onClick={handleJoin}
           disabled={loading}
         >
-          {loading ? 'Joining...' : 'Join Game'}
+          {loading ? 'Joining...' : isAccessory ? 'Join as Accessory' : 'Join Game'}
         </button>
         <button 
           className={styles.backButton}

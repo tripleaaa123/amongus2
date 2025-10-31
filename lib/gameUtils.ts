@@ -26,6 +26,7 @@ export interface Game {
   imposterCount: number;
   createdAt: number;
   sabotageOngoing?: boolean;
+  gameEnd?: boolean;
 }
 
 export function generateGameCode(): string {
@@ -60,7 +61,7 @@ export async function createGame(hostNickname: string, imposterCount: number): P
   }
 }
 
-export async function joinGame(gameCode: string, nickname: string): Promise<string | null> {
+export async function joinGame(gameCode: string, nickname: string, isAccessory: boolean = false): Promise<string | null> {
   const gamesRef = collection(db, 'games');
   const q = query(gamesRef, where('code', '==', gameCode.toUpperCase()));
   const querySnapshot = await getDocs(q);
@@ -72,8 +73,13 @@ export async function joinGame(gameCode: string, nickname: string): Promise<stri
   const gameDoc = querySnapshot.docs[0];
   const gameData = gameDoc.data() as Game;
   
-  if (gameData.status !== 'waiting') {
+  if (gameData.status !== 'waiting' && !isAccessory) {
     return null;
+  }
+
+  if (isAccessory) {
+    // Accessory devices don't join as players, just return game ID
+    return gameDoc.id;
   }
 
   const playerId = `player_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -209,5 +215,15 @@ export async function completeTask(gameId: string, playerId: string, taskId: str
 export async function triggerSabotage(gameId: string) {
   const gameRef = doc(db, 'games', gameId);
   await updateDoc(gameRef, { sabotageOngoing: true });
+}
+
+export async function resolveSabotage(gameId: string) {
+  const gameRef = doc(db, 'games', gameId);
+  await updateDoc(gameRef, { sabotageOngoing: false });
+}
+
+export async function endGame(gameId: string) {
+  const gameRef = doc(db, 'games', gameId);
+  await updateDoc(gameRef, { gameEnd: true });
 }
 

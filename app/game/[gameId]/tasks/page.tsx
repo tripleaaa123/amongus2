@@ -6,6 +6,7 @@ import { subscribeToGame, Game, Task } from '@/lib/gameUtils';
 import InfoModal from './components/InfoModal';
 import ScanModal from './components/ScanModal';
 import ActionsModal from './components/ActionsModal';
+import SabotageOverlay from './components/SabotageOverlay';
 import styles from './page.module.css';
 
 export default function TasksPage() {
@@ -114,6 +115,8 @@ export default function TasksPage() {
           onClose={() => setShowActions(false)}
         />
       )}
+
+      {game?.sabotageOngoing && <SabotageOverlay />}
     </div>
   );
 }

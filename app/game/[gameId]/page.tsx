@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { subscribeToGame, assignRoles, updateImposterCount, Game } from '@/lib/gameUtils';
+import SabotageOverlay from '../tasks/components/SabotageOverlay';
 import styles from './page.module.css';
 
 export default function GamePage() {
@@ -157,6 +158,7 @@ export default function GamePage() {
           </p>
         )}
       </div>
+      {game?.sabotageOngoing && <SabotageOverlay />}
     </div>
   );
 }
