@@ -15,6 +15,8 @@ export interface Player {
   isHost: boolean;
   role?: 'crewmate' | 'imposter';
   tasks?: Task[];
+  alive?: boolean;
+  vote?: string; // playerId of who they voted for, or 'abstain'
 }
 
 export interface Game {
@@ -28,6 +30,8 @@ export interface Game {
   sabotageOngoing?: boolean;
   gameEnd?: boolean;
   meetingCalled?: boolean;
+  votingOngoing?: boolean;
+  votingEndsAt?: number;
 }
 
 export function generateGameCode(): string {
@@ -46,7 +50,8 @@ export async function createGame(hostNickname: string, imposterCount: number): P
       players: [{
         id: hostId,
         nickname: hostNickname,
-        isHost: true
+        isHost: true,
+        alive: true
       }],
       imposterCount: imposterCount,
       createdAt: Date.now()
@@ -87,7 +92,8 @@ export async function joinGame(gameCode: string, nickname: string, isAccessory: 
   const newPlayer: Player = {
     id: playerId,
     nickname: nickname,
-    isHost: false
+    isHost: false,
+    alive: true
   };
 
   await updateDoc(gameDoc.ref, {
@@ -236,5 +242,77 @@ export async function callMeeting(gameId: string) {
 export async function endMeeting(gameId: string) {
   const gameRef = doc(db, 'games', gameId);
   await updateDoc(gameRef, { meetingCalled: false });
+}
+
+export async function startVoting(gameId: string) {
+  const gameRef = doc(db, 'games', gameId);
+  const votingEndsAt = Date.now() + 30000; // 30 seconds from now
+  await updateDoc(gameRef, { 
+    votingOngoing: true,
+    votingEndsAt: votingEndsAt,
+    meetingCalled: false
+  });
+}
+
+export async function submitVote(gameId: string, voterId: string, targetId: string) {
+  const gameRef = doc(db, 'games', gameId);
+  const gameSnap = await getDoc(gameRef);
+  
+  if (!gameSnap.exists()) return;
+
+  const gameData = gameSnap.data() as Game;
+  const players = gameData.players.map(player => {
+    if (player.id === voterId) {
+      return { ...player, vote: targetId };
+    }
+    return player;
+  });
+
+  await updateDoc(gameRef, { players });
+}
+
+export async function endVoting(gameId: string) {
+  const gameRef = doc(db, 'games', gameId);
+  const gameSnap = await getDoc(gameRef);
+  
+  if (!gameSnap.exists()) return;
+
+  const gameData = gameSnap.data() as Game;
+  
+  // Count votes from alive players only
+  const alivePlayers = gameData.players.filter(p => p.alive !== false);
+  const votes: Record<string, number> = {};
+  let abstainCount = 0;
+
+  alivePlayers.forEach(player => {
+    if (!player.vote || player.vote === 'abstain') {
+      abstainCount++;
+    } else {
+      votes[player.vote] = (votes[player.vote] || 0) + 1;
+    }
+  });
+
+  // Find player(s) with most votes
+  const maxVotes = Object.keys(votes).length > 0 ? Math.max(...Object.values(votes)) : 0;
+  const topVotees = maxVotes > 0 
+    ? Object.entries(votes)
+        .filter(([_, count]) => count === maxVotes)
+        .map(([playerId]) => playerId)
+    : [];
+
+  // Only kill if there's a clear winner (not a tie)
+  const players = gameData.players.map(player => {
+    if (topVotees.length === 1 && topVotees[0] === player.id && maxVotes > 0) {
+      return { ...player, alive: false, vote: undefined };
+    }
+    // Clear votes for next round
+    return { ...player, vote: undefined };
+  });
+
+  await updateDoc(gameRef, { 
+    players,
+    votingOngoing: false,
+    votingEndsAt: undefined
+  });
 }
 

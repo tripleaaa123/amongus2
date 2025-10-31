@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { subscribeToGame, resolveSabotage, endGame, callMeeting, endMeeting, Game } from '@/lib/gameUtils';
+import { subscribeToGame, resolveSabotage, endGame, callMeeting, endMeeting, startVoting, Game } from '@/lib/gameUtils';
 import styles from './page.module.css';
 
 interface Puzzle {
@@ -204,6 +204,10 @@ export default function AccessoryPage() {
     await endMeeting(gameId);
   };
 
+  const handleGoToVote = async () => {
+    await startVoting(gameId);
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.content}>
@@ -229,7 +233,7 @@ export default function AccessoryPage() {
             <div className={styles.meetingButtons}>
               <button 
                 className={styles.meetingButton}
-                onClick={handleEndMeeting}
+                onClick={handleGoToVote}
               >
                 Go to Vote
               </button>

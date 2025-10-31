@@ -5,6 +5,7 @@ import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { subscribeToGame, assignRoles, updateImposterCount, Game } from '@/lib/gameUtils';
 import SabotageOverlay from './tasks/components/SabotageOverlay';
 import MeetingOverlay from './tasks/components/MeetingOverlay';
+import VotingOverlay from './tasks/components/VotingOverlay';
 import styles from './page.module.css';
 
 export default function GamePage() {
@@ -159,8 +160,11 @@ export default function GamePage() {
           </p>
         )}
       </div>
-      {game?.sabotageOngoing && <SabotageOverlay />}
-      {game?.meetingCalled && !game?.sabotageOngoing && <MeetingOverlay />}
+      {game?.sabotageOngoing && localPlayer?.alive !== false && <SabotageOverlay />}
+      {game?.meetingCalled && !game?.sabotageOngoing && localPlayer?.alive !== false && <MeetingOverlay />}
+      {game?.votingOngoing && !game?.sabotageOngoing && localPlayer?.alive !== false && (
+        <VotingOverlay gameId={gameId} playerNickname={playerNickname} />
+      )}
     </div>
   );
 }

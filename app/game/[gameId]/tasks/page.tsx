@@ -8,6 +8,7 @@ import ScanModal from './components/ScanModal';
 import ActionsModal from './components/ActionsModal';
 import SabotageOverlay from './components/SabotageOverlay';
 import MeetingOverlay from './components/MeetingOverlay';
+import VotingOverlay from './components/VotingOverlay';
 import styles from './page.module.css';
 
 export default function TasksPage() {
@@ -86,9 +87,11 @@ export default function TasksPage() {
           <button className={styles.navButton} onClick={() => setShowScan(true)}>
             Scan
           </button>
-          <button className={styles.navButton} onClick={() => setShowActions(true)}>
-            Actions
-          </button>
+          {localPlayer?.alive !== false && (
+            <button className={styles.navButton} onClick={() => setShowActions(true)}>
+              Actions
+            </button>
+          )}
         </nav>
       </div>
 
@@ -117,8 +120,11 @@ export default function TasksPage() {
         />
       )}
 
-      {game?.sabotageOngoing && <SabotageOverlay />}
-      {game?.meetingCalled && !game?.sabotageOngoing && <MeetingOverlay />}
+      {game?.sabotageOngoing && localPlayer?.alive !== false && <SabotageOverlay />}
+      {game?.meetingCalled && !game?.sabotageOngoing && localPlayer?.alive !== false && <MeetingOverlay />}
+      {game?.votingOngoing && !game?.sabotageOngoing && localPlayer?.alive !== false && (
+        <VotingOverlay gameId={gameId} playerNickname={playerNickname} />
+      )}
     </div>
   );
 }
