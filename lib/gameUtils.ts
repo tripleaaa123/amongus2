@@ -163,10 +163,27 @@ export async function assignRoles(gameId: string) {
   }
 
   // Assign roles and tasks
+  // First assign imposters
   players.forEach((player, index) => {
-    player.role = index < imposterCount ? 'imposter' : 'crewmate';
+    if (index < imposterCount) {
+      player.role = 'imposter';
+    }
     // Everyone gets tasks (including imposters to help them blend in)
     player.tasks = assignRandomTasks(allTasks, 7);
+  });
+
+  // Randomly assign one snitch from the non-imposter players
+  const nonImposterPlayers = players.filter((_, index) => index >= imposterCount);
+  if (nonImposterPlayers.length > 0) {
+    const snitchIndex = Math.floor(Math.random() * nonImposterPlayers.length);
+    nonImposterPlayers[snitchIndex].role = 'snitch';
+  }
+
+  // Assign remaining non-imposter, non-snitch players as crewmates
+  players.forEach((player) => {
+    if (!player.role) {
+      player.role = 'crewmate';
+    }
   });
 
   await updateDoc(gameRef, {
