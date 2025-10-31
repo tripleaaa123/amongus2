@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
-import { subscribeToGame, Game } from '@/lib/gameUtils';
+import { subscribeToGame, Game, Task } from '@/lib/gameUtils';
 import styles from './page.module.css';
 
 export default function TasksPage() {
@@ -60,7 +60,7 @@ export default function TasksPage() {
           <>
             <p className={styles.taskCount}>You have {tasks.length} tasks to complete:</p>
             <ul className={styles.taskList}>
-              {tasks.map((task, index) => (
+              {tasks.map((task: Task, index: number) => (
                 <li key={task.id || index} className={styles.taskItem}>
                   <span className={styles.taskNumber}>{index + 1}</span>
                   <span className={styles.taskName}>{task.name}</span>
