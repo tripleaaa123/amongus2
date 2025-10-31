@@ -1,0 +1,216 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.loading {
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.lobby {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2rem;
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  min-width: 400px;
+  max-width: 600px;
+  width: 100%;
+}
+
+.lobbyTitle {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.gameCode {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.codeLabel {
+  display: block;
+  margin-bottom: 0.5rem;
+  opacity: 0.8;
+}
+
+.codeValue {
+  display: block;
+  font-size: 2.5rem;
+  font-weight: bold;
+  letter-spacing: 0.5rem;
+  color: #667eea;
+}
+
+.hostControls {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.inputGroup {
+  margin-bottom: 1rem;
+}
+
+.inputGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.inputGroup input[type="range"] {
+  width: 100%;
+  height: 8px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.2);
+  outline: none;
+}
+
+.inputGroup input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #667eea;
+  cursor: pointer;
+}
+
+.inputGroup input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #667eea;
+  cursor: pointer;
+  border: none;
+}
+
+.startButton {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.2rem;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  transition: transform 0.2s;
+  margin-top: 1rem;
+}
+
+.startButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.startButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.warning {
+  color: #ffd93d;
+  text-align: center;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.playersList {
+  margin-bottom: 1.5rem;
+}
+
+.playersTitle {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+}
+
+.players {
+  list-style: none;
+}
+
+.player {
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.playerName {
+  font-weight: 500;
+}
+
+.hostBadge {
+  color: #ffd93d;
+  font-size: 0.9rem;
+}
+
+.waitingText {
+  text-align: center;
+  opacity: 0.8;
+  font-style: italic;
+}
+
+.roleContainer {
+  text-align: center;
+  max-width: 500px;
+}
+
+.roleTitle {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+}
+
+.roleCard {
+  padding: 3rem 2rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(10px);
+  border: 3px solid;
+}
+
+.roleCard.crewmate {
+  background: linear-gradient(135deg, rgba(66, 153, 225, 0.3) 0%, rgba(52, 152, 219, 0.3) 100%);
+  border-color: #4299e1;
+}
+
+.roleCard.imposter {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.3) 100%);
+  border-color: #ef4444;
+}
+
+.roleIcon {
+  font-size: 6rem;
+  margin-bottom: 1rem;
+}
+
+.roleName {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  font-weight: bold;
+}
+
+.roleDescription {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.gameInfo {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.gameInfo p {
+  margin: 0.5rem 0;
+}
+
