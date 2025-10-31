@@ -124,6 +124,7 @@ export default function TasksPage() {
         <ActionsModal
           role={localPlayer.role}
           gameId={gameId}
+          game={game}
           onClose={() => setShowActions(false)}
         />
       )}

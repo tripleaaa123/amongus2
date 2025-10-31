@@ -33,6 +33,7 @@ export interface Game {
   votingOngoing?: boolean;
   votingEndsAt?: number;
   winner?: 'imposters' | 'crewmates' | 'snitch';
+  sabotageCooldownUntil?: number;
 }
 
 export function generateGameCode(): string {
@@ -245,12 +246,29 @@ export async function completeTask(gameId: string, playerId: string, taskId: str
 
 export async function triggerSabotage(gameId: string) {
   const gameRef = doc(db, 'games', gameId);
+  const gameSnap = await getDoc(gameRef);
+  
+  if (!gameSnap.exists()) return;
+  
+  const gameData = gameSnap.data() as Game;
+  
+  // Check if cooldown is active
+  const now = Date.now();
+  if (gameData.sabotageCooldownUntil && now < gameData.sabotageCooldownUntil) {
+    throw new Error('Sabotage is on cooldown. Please wait before triggering again.');
+  }
+  
   await updateDoc(gameRef, { sabotageOngoing: true });
 }
 
 export async function resolveSabotage(gameId: string) {
   const gameRef = doc(db, 'games', gameId);
-  await updateDoc(gameRef, { sabotageOngoing: false });
+  // Set cooldown for 2 minutes (120000 ms) from now
+  const cooldownUntil = Date.now() + 120000;
+  await updateDoc(gameRef, { 
+    sabotageOngoing: false,
+    sabotageCooldownUntil: cooldownUntil
+  });
 }
 
 export async function endGame(gameId: string) {

@@ -84,6 +84,13 @@
   cursor: not-allowed;
 }
 
+.cooldownText {
+  font-size: 1rem;
+  color: #f59e0b;
+  margin-bottom: 1rem;
+  font-weight: bold;
+}
+
 .crewmateActions {
   text-align: center;
 }
