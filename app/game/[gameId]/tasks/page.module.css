@@ -74,6 +74,22 @@
 .taskName {
   font-size: 1.1rem;
   font-weight: 500;
+  flex: 1;
+}
+
+.taskItem.completed {
+  opacity: 0.6;
+}
+
+.taskItem.completed .taskName {
+  text-decoration: line-through;
+}
+
+.checkmark {
+  color: #4ade80;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-left: 0.5rem;
 }
 
 .gameInfo {
@@ -86,5 +102,30 @@
 
 .gameInfo p {
   margin: 0.5rem 0;
+}
+
+.navBar {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.navButton {
+  flex: 1;
+  padding: 1rem;
+  font-size: 1.1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.navButton:hover {
+  transform: translateY(-2px);
 }
 

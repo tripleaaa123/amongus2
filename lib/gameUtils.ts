@@ -5,6 +5,8 @@ export interface Task {
   id: string;
   name: string;
   taskId: string;
+  completed?: boolean;
+  proofImageUrl?: string;
 }
 
 export interface Player {
@@ -166,6 +168,40 @@ export function subscribeToGame(gameId: string, callback: (game: Game | null) =>
     } else {
       callback(null);
     }
+  });
+}
+
+export async function completeTask(gameId: string, playerId: string, taskId: string, imageUrl: string) {
+  const gameRef = doc(db, 'games', gameId);
+  const gameSnap = await getDoc(gameRef);
+  
+  if (!gameSnap.exists()) return;
+
+  const gameData = gameSnap.data() as Game;
+  const players = gameData.players.map(player => {
+    if (player.id === playerId) {
+      const updatedTasks = player.tasks?.map(task => {
+        if (task.taskId === taskId) {
+          return { ...task, completed: true, proofImageUrl: imageUrl };
+        }
+        return task;
+      });
+      return { ...player, tasks: updatedTasks };
+    }
+    return player;
+  });
+
+  await updateDoc(gameRef, { players });
+
+  // Also store proof separately for admin review
+  const proofRef = doc(collection(db, 'proofs'));
+  await setDoc(proofRef, {
+    gameId,
+    playerId,
+    playerNickname: gameData.players.find(p => p.id === playerId)?.nickname || '',
+    taskId,
+    imageUrl,
+    timestamp: Date.now()
   });
 }
 

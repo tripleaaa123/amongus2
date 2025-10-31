@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { subscribeToGame, Game, Task } from '@/lib/gameUtils';
+import InfoModal from './components/InfoModal';
+import ScanModal from './components/ScanModal';
 import styles from './page.module.css';
 
 export default function TasksPage() {
@@ -14,6 +16,8 @@ export default function TasksPage() {
   
   const [game, setGame] = useState<Game | null>(null);
   const [localPlayer, setLocalPlayer] = useState<any>(null);
+  const [showInfo, setShowInfo] = useState(false);
+  const [showScan, setShowScan] = useState(false);
 
   useEffect(() => {
     if (!gameId) return;
@@ -29,6 +33,11 @@ export default function TasksPage() {
     return () => unsubscribe();
   }, [gameId, playerNickname]);
 
+  const handleTaskComplete = () => {
+    // Task completion updates come from Firestore subscription
+    // This just forces a refresh if needed
+  };
+
   if (!game || !localPlayer) {
     return (
       <div className={styles.container}>
@@ -38,18 +47,25 @@ export default function TasksPage() {
   }
 
   const tasks = localPlayer.tasks || [];
+  const completedCount = tasks.filter((t: Task) => t.completed).length;
 
   return (
     <div className={styles.container}>
       <div className={styles.tasksContainer}>
         <h1 className={styles.title}>Your Tasks</h1>
         
-        <p className={styles.taskCount}>You have {tasks.length} tasks to complete:</p>
+        <p className={styles.taskCount}>
+          {completedCount} of {tasks.length} tasks completed
+        </p>
         <ul className={styles.taskList}>
           {tasks.map((task: Task, index: number) => (
-            <li key={task.id || index} className={styles.taskItem}>
+            <li 
+              key={task.id || index} 
+              className={`${styles.taskItem} ${task.completed ? styles.completed : ''}`}
+            >
               <span className={styles.taskNumber}>{index + 1}</span>
               <span className={styles.taskName}>{task.name}</span>
+              {task.completed && <span className={styles.checkmark}>✓</span>}
             </li>
           ))}
         </ul>
@@ -58,7 +74,33 @@ export default function TasksPage() {
           <p>Game Code: <strong>{game.code}</strong></p>
           <p>Players: {game.players.length}</p>
         </div>
+
+        <nav className={styles.navBar}>
+          <button className={styles.navButton} onClick={() => setShowInfo(true)}>
+            Info
+          </button>
+          <button className={styles.navButton} onClick={() => setShowScan(true)}>
+            Scan
+          </button>
+        </nav>
       </div>
+
+      {showInfo && (
+        <InfoModal 
+          role={localPlayer.role} 
+          onClose={() => setShowInfo(false)} 
+        />
+      )}
+
+      {showScan && (
+        <ScanModal
+          gameId={gameId}
+          playerId={localPlayer.id}
+          playerTasks={tasks}
+          onClose={() => setShowScan(false)}
+          onTaskComplete={handleTaskComplete}
+        />
+      )}
     </div>
   );
 }
