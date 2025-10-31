@@ -148,12 +148,8 @@ export async function assignRoles(gameId: string) {
   // Assign roles and tasks
   players.forEach((player, index) => {
     player.role = index < imposterCount ? 'imposter' : 'crewmate';
-    // Only crewmates get tasks (imposters don't have tasks)
-    if (player.role === 'crewmate') {
-      player.tasks = assignRandomTasks(allTasks, 7);
-    } else {
-      player.tasks = [];
-    }
+    // Everyone gets tasks (including imposters to help them blend in)
+    player.tasks = assignRandomTasks(allTasks, 7);
   });
 
   await updateDoc(gameRef, {

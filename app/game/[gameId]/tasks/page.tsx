@@ -44,31 +44,15 @@ export default function TasksPage() {
       <div className={styles.tasksContainer}>
         <h1 className={styles.title}>Your Tasks</h1>
         
-        <div className={styles.roleInfo}>
-          <span className={`${styles.roleBadge} ${localPlayer.role === 'imposter' ? styles.imposter : styles.crewmate}`}>
-            {localPlayer.role === 'imposter' ? '🔴 IMPOSTER' : '🔵 CREWMATE'}
-          </span>
-        </div>
-
-        {localPlayer.role === 'imposter' ? (
-          <div className={styles.imposterMessage}>
-            <h2>You have no tasks!</h2>
-            <p>Your goal is to eliminate crewmates without being caught.</p>
-            <p>Sabotage and blend in with the crewmates.</p>
-          </div>
-        ) : (
-          <>
-            <p className={styles.taskCount}>You have {tasks.length} tasks to complete:</p>
-            <ul className={styles.taskList}>
-              {tasks.map((task: Task, index: number) => (
-                <li key={task.id || index} className={styles.taskItem}>
-                  <span className={styles.taskNumber}>{index + 1}</span>
-                  <span className={styles.taskName}>{task.name}</span>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
+        <p className={styles.taskCount}>You have {tasks.length} tasks to complete:</p>
+        <ul className={styles.taskList}>
+          {tasks.map((task: Task, index: number) => (
+            <li key={task.id || index} className={styles.taskItem}>
+              <span className={styles.taskNumber}>{index + 1}</span>
+              <span className={styles.taskName}>{task.name}</span>
+            </li>
+          ))}
+        </ul>
 
         <div className={styles.gameInfo}>
           <p>Game Code: <strong>{game.code}</strong></p>

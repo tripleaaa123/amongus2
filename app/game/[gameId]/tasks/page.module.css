@@ -28,29 +28,6 @@
   text-align: center;
 }
 
-.roleInfo {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.roleBadge {
-  display: inline-block;
-  padding: 0.5rem 1.5rem;
-  border-radius: 25px;
-  font-weight: bold;
-  font-size: 1.1rem;
-}
-
-.roleBadge.crewmate {
-  background: linear-gradient(135deg, rgba(66, 153, 225, 0.3) 0%, rgba(52, 152, 219, 0.3) 100%);
-  border: 2px solid #4299e1;
-}
-
-.roleBadge.imposter {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.3) 100%);
-  border: 2px solid #ef4444;
-}
-
 .taskCount {
   font-size: 1.2rem;
   margin-bottom: 1.5rem;
@@ -97,26 +74,6 @@
 .taskName {
   font-size: 1.1rem;
   font-weight: 500;
-}
-
-.imposterMessage {
-  text-align: center;
-  padding: 2rem;
-  background: rgba(239, 68, 68, 0.1);
-  border-radius: 10px;
-  border: 2px solid rgba(239, 68, 68, 0.3);
-}
-
-.imposterMessage h2 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-  color: #ef4444;
-}
-
-.imposterMessage p {
-  font-size: 1.1rem;
-  margin: 0.5rem 0;
-  opacity: 0.9;
 }
 
 .gameInfo {
