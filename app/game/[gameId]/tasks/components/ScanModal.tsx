@@ -27,7 +27,9 @@ export default function ScanModal({ gameId, playerId, playerTasks, onClose, onTa
 
   const startScanner = async () => {
     try {
-      if (scannerRef.current) return;
+      if (scannerRef.current) {
+        await stopScanner();
+      }
       
       const html5Qrcode = new Html5Qrcode("qr-reader");
       scannerRef.current = html5Qrcode;
@@ -43,7 +45,7 @@ export default function ScanModal({ gameId, playerId, playerTasks, onClose, onTa
           const task = playerTasks.find(t => t.taskId === decodedText);
           if (task && !task.completed) {
             setScannedTaskId(decodedText);
-            stopScanner();
+            html5Qrcode.stop().catch(() => {});
             setStep('capture');
           } else {
             alert('Task not found or already completed!');
@@ -59,10 +61,18 @@ export default function ScanModal({ gameId, playerId, playerTasks, onClose, onTa
     }
   };
 
-  const stopScanner = () => {
+  const stopScanner = async () => {
     if (scannerRef.current) {
-      scannerRef.current.stop().catch(() => {});
-      scannerRef.current.clear();
+      try {
+        await scannerRef.current.stop();
+      } catch (err) {
+        // Scanner might not be running, ignore
+      }
+      try {
+        scannerRef.current.clear();
+      } catch (err) {
+        // Ignore clear errors
+      }
       scannerRef.current = null;
     }
   };
@@ -93,13 +103,23 @@ export default function ScanModal({ gameId, playerId, playerTasks, onClose, onTa
   };
 
   useEffect(() => {
-    if (step === 'scan') {
-      startScanner();
-    } else if (step === 'capture') {
-      startCamera();
-    }
+    let mounted = true;
+
+    const init = async () => {
+      if (step === 'scan' && mounted) {
+        await stopScanner(); // Clean up any existing scanner
+        await stopCamera(); // Clean up any existing camera
+        startScanner();
+      } else if (step === 'capture' && mounted) {
+        await stopScanner();
+        startCamera();
+      }
+    };
+
+    init();
 
     return () => {
+      mounted = false;
       stopScanner();
       stopCamera();
     };
@@ -187,8 +207,10 @@ export default function ScanModal({ gameId, playerId, playerTasks, onClose, onTa
               <>
                 <img src={capturedImage} alt="Proof" className={styles.preview} />
                 <div className={styles.buttonGroup}>
-                  <button className={styles.retakeButton} onClick={() => {
+                  <button className={styles.retakeButton} onClick={async () => {
                     setCapturedImage(null);
+                    stopCamera();
+                    await new Promise(resolve => setTimeout(resolve, 100));
                     startCamera();
                   }}>
                     Retake
