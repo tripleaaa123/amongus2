@@ -16,6 +16,8 @@ export default function VotePage() {
   const [localPlayer, setLocalPlayer] = useState<Player | null>(null);
   const [timeLeft, setTimeLeft] = useState(30);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  const [votingEnded, setVotingEnded] = useState(false);
+  const [votedOutPlayer, setVotedOutPlayer] = useState<Player | null>(null);
 
   useEffect(() => {
     if (!gameId) return;
@@ -31,17 +33,32 @@ export default function VotePage() {
           setSelectedPlayerId(player.vote === 'abstain' ? 'abstain' : player.vote);
         }
 
-        // Redirect back to tasks when voting ends
-        if (!gameData.votingOngoing && gameData.votingEndsAt === undefined && timeLeft === 0) {
+        // Check if voting just ended and find who was voted out
+        const wasVoting = game?.votingOngoing;
+        const isVotingNow = gameData.votingOngoing;
+        
+        if (wasVoting && !isVotingNow && !votingEnded) {
+          setVotingEnded(true);
+          // Find player who was just killed (was alive, now dead)
+          const killedPlayer = gameData.players.find(p => {
+            const previousPlayer = game?.players.find(prev => prev.id === p.id);
+            return previousPlayer?.alive !== false && p.alive === false;
+          });
+          
+          if (killedPlayer) {
+            setVotedOutPlayer(killedPlayer);
+          }
+          
+          // Redirect after showing results
           setTimeout(() => {
             router.push(`/game/${gameId}/tasks?playerId=${encodeURIComponent(playerNickname)}`);
-          }, 2000); // Show result for 2 seconds
+          }, 5000); // Show result for 5 seconds
         }
       }
     });
 
     return () => unsubscribe();
-  }, [gameId, playerNickname]);
+  }, [gameId, playerNickname, game?.votingOngoing, votingEnded, router]);
 
   // Countdown timer
   useEffect(() => {
@@ -56,12 +73,22 @@ export default function VotePage() {
         clearInterval(interval);
         // Auto-submit abstain if no vote was selected and player is alive
         if (!localPlayer?.vote && localPlayer?.alive !== false) {
-          submitVote(gameId, localPlayer!.id, 'abstain');
+          submitVote(gameId, localPlayer!.id, 'abstain').then(() => {
+            // End voting after a short delay to allow all votes to sync
+            setTimeout(() => {
+              endVoting(gameId).catch(err => {
+                console.error('Error ending voting:', err);
+              });
+            }, 1000);
+          });
+        } else {
+          // End voting after a short delay to allow all votes to sync
+          setTimeout(() => {
+            endVoting(gameId).catch(err => {
+              console.error('Error ending voting:', err);
+            });
+          }, 1000);
         }
-        // End voting after a short delay to allow all votes to sync
-        setTimeout(() => {
-          endVoting(gameId);
-        }, 1500);
       }
     }, 100);
 
@@ -147,8 +174,27 @@ export default function VotePage() {
           </button>
         </div>
 
-        {localPlayer.vote && (
+        {localPlayer.vote && !votingEnded && (
           <p className={styles.votedMessage}>You have voted</p>
+        )}
+
+        {votingEnded && (
+          <div className={styles.results}>
+            <h2 className={styles.resultsTitle}>Voting Results</h2>
+            {votedOutPlayer ? (
+              <div className={styles.votedOut}>
+                <p className={styles.votedOutName}>{votedOutPlayer.nickname}</p>
+                <p className={styles.votedOutText}>was voted out</p>
+                <p className={styles.noReveal}>Their identity was not revealed.</p>
+              </div>
+            ) : (
+              <div className={styles.tieResult}>
+                <p className={styles.tieText}>The vote was tied!</p>
+                <p className={styles.noElimination}>No one was eliminated.</p>
+              </div>
+            )}
+            <p className={styles.redirecting}>Returning to game...</p>
+          </div>
         )}
       </div>
     </div>
