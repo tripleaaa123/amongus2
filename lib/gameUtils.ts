@@ -1,4 +1,4 @@
-import { collection, doc, setDoc, getDoc, updateDoc, onSnapshot, query, where, getDocs } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, updateDoc, onSnapshot, query, where, getDocs, deleteField } from 'firebase/firestore';
 import { db } from '../firebase';
 
 export interface Task {
@@ -303,16 +303,20 @@ export async function endVoting(gameId: string) {
   // Only kill if there's a clear winner (not a tie)
   const players = gameData.players.map(player => {
     if (topVotees.length === 1 && topVotees[0] === player.id && maxVotes > 0) {
-      return { ...player, alive: false, vote: undefined };
+      const updatedPlayer = { ...player, alive: false };
+      delete updatedPlayer.vote;
+      return updatedPlayer;
     }
     // Clear votes for next round
-    return { ...player, vote: undefined };
+    const updatedPlayer = { ...player };
+    delete updatedPlayer.vote;
+    return updatedPlayer;
   });
 
   await updateDoc(gameRef, { 
     players,
     votingOngoing: false,
-    votingEndsAt: undefined
+    votingEndsAt: deleteField()
   });
 }
 
