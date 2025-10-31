@@ -5,6 +5,7 @@ import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { subscribeToGame, Game, Task } from '@/lib/gameUtils';
 import InfoModal from './components/InfoModal';
 import ScanModal from './components/ScanModal';
+import ActionsModal from './components/ActionsModal';
 import styles from './page.module.css';
 
 export default function TasksPage() {
@@ -18,6 +19,7 @@ export default function TasksPage() {
   const [localPlayer, setLocalPlayer] = useState<any>(null);
   const [showInfo, setShowInfo] = useState(false);
   const [showScan, setShowScan] = useState(false);
+  const [showActions, setShowActions] = useState(false);
 
   useEffect(() => {
     if (!gameId) return;
@@ -82,6 +84,9 @@ export default function TasksPage() {
           <button className={styles.navButton} onClick={() => setShowScan(true)}>
             Scan
           </button>
+          <button className={styles.navButton} onClick={() => setShowActions(true)}>
+            Actions
+          </button>
         </nav>
       </div>
 
@@ -99,6 +104,14 @@ export default function TasksPage() {
           playerTasks={tasks}
           onClose={() => setShowScan(false)}
           onTaskComplete={handleTaskComplete}
+        />
+      )}
+
+      {showActions && (
+        <ActionsModal
+          role={localPlayer.role}
+          gameId={gameId}
+          onClose={() => setShowActions(false)}
         />
       )}
     </div>

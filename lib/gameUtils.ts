@@ -25,6 +25,7 @@ export interface Game {
   players: Player[];
   imposterCount: number;
   createdAt: number;
+  sabotageOngoing?: boolean;
 }
 
 export function generateGameCode(): string {
@@ -203,5 +204,10 @@ export async function completeTask(gameId: string, playerId: string, taskId: str
     imageUrl,
     timestamp: Date.now()
   });
+}
+
+export async function triggerSabotage(gameId: string) {
+  const gameRef = doc(db, 'games', gameId);
+  await updateDoc(gameRef, { sabotageOngoing: true });
 }
 
