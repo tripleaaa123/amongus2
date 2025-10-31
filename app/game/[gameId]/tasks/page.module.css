@@ -1,0 +1,133 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.loading {
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.tasksContainer {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2rem;
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  min-width: 400px;
+  max-width: 600px;
+  width: 100%;
+}
+
+.title {
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.roleInfo {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.roleBadge {
+  display: inline-block;
+  padding: 0.5rem 1.5rem;
+  border-radius: 25px;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.roleBadge.crewmate {
+  background: linear-gradient(135deg, rgba(66, 153, 225, 0.3) 0%, rgba(52, 152, 219, 0.3) 100%);
+  border: 2px solid #4299e1;
+}
+
+.roleBadge.imposter {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.3) 100%);
+  border: 2px solid #ef4444;
+}
+
+.taskCount {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  opacity: 0.9;
+}
+
+.taskList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.taskItem {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  border-left: 4px solid #667eea;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.taskItem:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(5px);
+}
+
+.taskNumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: bold;
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+.taskName {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.imposterMessage {
+  text-align: center;
+  padding: 2rem;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 10px;
+  border: 2px solid rgba(239, 68, 68, 0.3);
+}
+
+.imposterMessage h2 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #ef4444;
+}
+
+.imposterMessage p {
+  font-size: 1.1rem;
+  margin: 0.5rem 0;
+  opacity: 0.9;
+}
+
+.gameInfo {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  text-align: center;
+}
+
+.gameInfo p {
+  margin: 0.5rem 0;
+}
+

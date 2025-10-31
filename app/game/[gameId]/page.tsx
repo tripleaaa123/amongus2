@@ -1,18 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { subscribeToGame, assignRoles, updateImposterCount, Game } from '@/lib/gameUtils';
 import styles from './page.module.css';
 
 export default function GamePage() {
   const params = useParams();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const gameId = params.gameId as string;
   const playerNickname = searchParams.get('playerId') || '';
   
   const [game, setGame] = useState<Game | null>(null);
   const [localPlayer, setLocalPlayer] = useState<any>(null);
+  const [roleShown, setRoleShown] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!gameId) return;
@@ -23,15 +26,30 @@ export default function GamePage() {
         // Find local player by nickname
         const player = gameData.players.find(p => p.nickname === playerNickname);
         setLocalPlayer(player);
+        
+        // If game is playing and player has role but hasn't seen it yet, show role then redirect
+        if (gameData.status === 'playing' && player?.role && !roleShown) {
+          setRoleShown(true);
+          // Show role for 3 seconds, then redirect to tasks
+          setTimeout(() => {
+            router.push(`/game/${gameId}/tasks?playerId=${encodeURIComponent(playerNickname)}`);
+          }, 3000);
+        }
       }
     });
 
     return () => unsubscribe();
-  }, [gameId, playerNickname]);
-
+  }, [gameId, playerNickname, router, roleShown]);
+  
   const handleStartGame = async () => {
     if (!game || !localPlayer?.isHost) return;
-    await assignRoles(gameId);
+    setError('');
+    try {
+      await assignRoles(gameId);
+    } catch (err: any) {
+      setError(err.message || 'Failed to start game. Make sure tasks are added to Firestore.');
+      console.error('Start game error:', err);
+    }
   };
 
   const handleUpdateImposterCount = async (count: number) => {
@@ -109,6 +127,9 @@ export default function GamePage() {
             </button>
             {game.players.length < 2 && (
               <p className={styles.warning}>Need at least 2 players to start</p>
+            )}
+            {error && (
+              <div className={styles.error}>{error}</div>
             )}
           </div>
         )}

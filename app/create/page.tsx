@@ -24,8 +24,9 @@ export default function CreateGame() {
     try {
       const gameId = await createGame(nickname.trim(), imposterCount);
       router.push(`/game/${gameId}?playerId=${encodeURIComponent(nickname.trim())}`);
-    } catch (err) {
-      setError('Failed to create game. Please try again.');
+    } catch (err: any) {
+      console.error('Create game error:', err);
+      setError(err.message || 'Failed to create game. Please check Firebase configuration.');
       setLoading(false);
     }
   };
