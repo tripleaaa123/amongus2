@@ -76,14 +76,16 @@ export default function GamePage() {
           <h1 className={styles.roleTitle}>Your Role</h1>
           <div className={`${styles.roleCard} ${localPlayer.role === 'imposter' ? styles.imposter : styles.crewmate}`}>
             <div className={styles.roleIcon}>
-              {localPlayer.role === 'imposter' ? '🔴' : '🔵'}
+              {localPlayer.role === 'imposter' ? '🔴' : localPlayer.role === 'snitch' ? '🕵️' : '🔵'}
             </div>
             <h2 className={styles.roleName}>
-              {localPlayer.role === 'imposter' ? 'IMPOSTER' : 'CREWMATE'}
+              {localPlayer.role === 'imposter' ? 'IMPOSTER' : localPlayer.role === 'snitch' ? 'SNITCH' : 'CREWMATE'}
             </h2>
             <p className={styles.roleDescription}>
               {localPlayer.role === 'imposter' 
                 ? 'You are an Imposter! Your goal is to eliminate crewmates without being caught.'
+                : localPlayer.role === 'snitch'
+                ? 'You are a Snitch! Catch cheaters cheating on camera and win the game automatically. Otherwise, play as a normal crewmate.'
                 : 'You are a Crewmate! Find and vote out the imposters.'
               }
             </p>

@@ -13,7 +13,7 @@ export interface Player {
   id: string;
   nickname: string;
   isHost: boolean;
-  role?: 'crewmate' | 'imposter';
+  role?: 'crewmate' | 'imposter' | 'snitch';
   tasks?: Task[];
   alive?: boolean;
   vote?: string; // playerId of who they voted for, or 'abstain'
@@ -32,7 +32,7 @@ export interface Game {
   meetingCalled?: boolean;
   votingOngoing?: boolean;
   votingEndsAt?: number;
-  winner?: 'imposters' | 'crewmates';
+  winner?: 'imposters' | 'crewmates' | 'snitch';
 }
 
 export function generateGameCode(): string {
@@ -219,9 +219,9 @@ export async function completeTask(gameId: string, playerId: string, taskId: str
     timestamp: Date.now()
   });
 
-  // Check win conditions after task completion (only for crewmates)
+  // Check win conditions after task completion (for crewmates and snitch)
   const player = gameData.players.find(p => p.id === playerId);
-  if (player?.role === 'crewmate') {
+  if (player?.role === 'crewmate' || player?.role === 'snitch') {
     await checkWinConditions(gameId);
   }
 }
@@ -348,7 +348,7 @@ export async function checkWinConditions(gameId: string): Promise<boolean> {
 
   const alivePlayers = gameData.players.filter(p => p.alive !== false);
   const aliveImposters = alivePlayers.filter(p => p.role === 'imposter');
-  const aliveCrewmates = alivePlayers.filter(p => p.role === 'crewmate');
+  const aliveCrewmates = alivePlayers.filter(p => p.role === 'crewmate' || p.role === 'snitch');
 
   let winner: 'imposters' | 'crewmates' | undefined;
 
@@ -360,9 +360,9 @@ export async function checkWinConditions(gameId: string): Promise<boolean> {
   else if (aliveImposters.length === 0) {
     winner = 'crewmates';
   }
-  // Condition 3: All crewmate tasks completed (Crewmate win)
+  // Condition 3: All crewmate tasks completed (Crewmate win) - includes snitch
   else {
-    const crewmatePlayers = gameData.players.filter(p => p.role === 'crewmate' && p.alive !== false);
+    const crewmatePlayers = gameData.players.filter(p => (p.role === 'crewmate' || p.role === 'snitch') && p.alive !== false);
     const allCrewmateTasksCompleted = crewmatePlayers.every(crewmate => {
       const tasks = crewmate.tasks || [];
       return tasks.length > 0 && tasks.every(task => task.completed === true);
@@ -384,5 +384,14 @@ export async function checkWinConditions(gameId: string): Promise<boolean> {
   }
 
   return false;
+}
+
+export async function endGameManually(gameId: string, winner: 'imposters' | 'crewmates' | 'snitch') {
+  const gameRef = doc(db, 'games', gameId);
+  await updateDoc(gameRef, {
+    status: 'finished',
+    winner: winner,
+    gameEnd: true
+  });
 }
 

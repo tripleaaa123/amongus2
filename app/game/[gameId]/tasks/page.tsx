@@ -10,6 +10,7 @@ import SabotageOverlay from './components/SabotageOverlay';
 import MeetingOverlay from './components/MeetingOverlay';
 import VotingOverlay from './components/VotingOverlay';
 import EndGameOverlay from './components/EndGameOverlay';
+import HostEndGameModal from './components/HostEndGameModal';
 import styles from './page.module.css';
 
 export default function TasksPage() {
@@ -24,6 +25,7 @@ export default function TasksPage() {
   const [showInfo, setShowInfo] = useState(false);
   const [showScan, setShowScan] = useState(false);
   const [showActions, setShowActions] = useState(false);
+  const [showHostEndGame, setShowHostEndGame] = useState(false);
 
   useEffect(() => {
     if (!gameId) return;
@@ -93,6 +95,11 @@ export default function TasksPage() {
               Actions
             </button>
           )}
+          {localPlayer?.isHost && (
+            <button className={styles.hostButton} onClick={() => setShowHostEndGame(true)}>
+              End Game
+            </button>
+          )}
         </nav>
       </div>
 
@@ -118,6 +125,13 @@ export default function TasksPage() {
           role={localPlayer.role}
           gameId={gameId}
           onClose={() => setShowActions(false)}
+        />
+      )}
+
+      {showHostEndGame && (
+        <HostEndGameModal
+          gameId={gameId}
+          onClose={() => setShowHostEndGame(false)}
         />
       )}
 

@@ -129,3 +129,20 @@
   transform: translateY(-2px);
 }
 
+.hostButton {
+  flex: 1;
+  padding: 0.875rem;
+  font-size: 1rem;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.hostButton:hover {
+  transform: translateY(-2px);
+}
+

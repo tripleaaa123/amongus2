@@ -11,15 +11,16 @@ export default function EndGameOverlay({ game }: EndGameOverlayProps) {
   if (!game.winner) return null;
 
   const isImposterWin = game.winner === 'imposters';
+  const isSnitchWin = game.winner === 'snitch';
 
   return (
     <div className={styles.overlay}>
       <div className={styles.content}>
         <div className={styles.icon}>
-          {isImposterWin ? '🔴' : '🔵'}
+          {isImposterWin ? '🔴' : isSnitchWin ? '🕵️' : '🔵'}
         </div>
         <h1 className={styles.title}>
-          {isImposterWin ? 'IMPOSTERS WIN!' : 'CREWMATES WIN!'}
+          {isImposterWin ? 'IMPOSTERS WIN!' : isSnitchWin ? 'SNITCH WINS!' : 'CREWMATES WIN!'}
         </h1>
         <div className={styles.reveal}>
           <h2 className={styles.revealTitle}>Role Reveal</h2>
@@ -34,7 +35,7 @@ export default function EndGameOverlay({ game }: EndGameOverlayProps) {
                 <div className={styles.playerInfo}>
                   <span className={styles.playerName}>{player.nickname}</span>
                   <span className={styles.playerRole}>
-                    {player.role === 'imposter' ? '🔴 IMPOSTER' : '🔵 CREWMATE'}
+                    {player.role === 'imposter' ? '🔴 IMPOSTER' : player.role === 'snitch' ? '🕵️ SNITCH' : '🔵 CREWMATE'}
                   </span>
                   {player.alive === false && (
                     <span className={styles.deadBadge}>☠️ ELIMINATED</span>

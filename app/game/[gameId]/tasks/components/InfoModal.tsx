@@ -3,7 +3,7 @@
 import styles from './InfoModal.module.css';
 
 interface InfoModalProps {
-  role: 'crewmate' | 'imposter' | undefined;
+  role: 'crewmate' | 'imposter' | 'snitch' | undefined;
   onClose: () => void;
 }
 
@@ -11,17 +11,26 @@ export default function InfoModal({ role, onClose }: InfoModalProps) {
   if (!role) return null;
 
   const isCrewmate = role === 'crewmate';
-  const title = isCrewmate ? 'CREWMATE' : 'IMPOSTER';
-  const icon = isCrewmate ? '🔵' : '🔴';
-  const goal = isCrewmate
-    ? 'Complete all your tasks and identify the imposters before they eliminate all crewmates.'
-    : 'Eliminate all crewmates without being caught. Blend in and sabotage their tasks.';
+  const isSnitch = role === 'snitch';
+  const isImposter = role === 'imposter';
+  
+  const title = isSnitch ? 'SNITCH' : isCrewmate ? 'CREWMATE' : 'IMPOSTER';
+  const icon = isSnitch ? '🕵️' : isCrewmate ? '🔵' : '🔴';
+  
+  let goal = '';
+  if (isSnitch) {
+    goal = 'Catch cheaters cheating on camera and win the game automatically. Otherwise, play as a normal crewmate.';
+  } else if (isCrewmate) {
+    goal = 'Complete all your tasks and identify the imposters before they eliminate all crewmates.';
+  } else {
+    goal = 'Eliminate all crewmates without being caught. Blend in and sabotage their tasks.';
+  }
 
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <button className={styles.closeButton} onClick={onClose}>×</button>
-        <div className={`${styles.roleCard} ${isCrewmate ? styles.crewmate : styles.imposter}`}>
+        <div className={`${styles.roleCard} ${isImposter ? styles.imposter : styles.crewmate}`}>
           <div className={styles.roleIcon}>{icon}</div>
           <h2 className={styles.roleTitle}>{title}</h2>
           <div className={styles.goalSection}>
