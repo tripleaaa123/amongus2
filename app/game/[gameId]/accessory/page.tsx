@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { subscribeToGame, resolveSabotage, endGame, Game } from '@/lib/gameUtils';
+import { subscribeToGame, resolveSabotage, endGame, callMeeting, endMeeting, Game } from '@/lib/gameUtils';
 import styles from './page.module.css';
 
 interface Puzzle {
@@ -194,6 +194,15 @@ export default function AccessoryPage() {
   }
 
   const showPuzzles = game.sabotageOngoing && puzzles.length > 0;
+  const showMeetingControls = game.meetingCalled;
+
+  const handleCallMeeting = async () => {
+    await callMeeting(gameId);
+  };
+
+  const handleEndMeeting = async () => {
+    await endMeeting(gameId);
+  };
 
   return (
     <div className={styles.container}>
@@ -201,10 +210,36 @@ export default function AccessoryPage() {
         <h1 className={styles.title}>Accessory Device</h1>
         <p className={styles.subtitle}>Game Code: <strong>{game.code}</strong></p>
 
-        {!showPuzzles && (
+        {!showPuzzles && !showMeetingControls && (
           <div className={styles.waiting}>
             <p>Waiting for sabotage...</p>
             <p className={styles.status}>Status: {game.sabotageOngoing ? 'SABOTAGE!' : 'Normal'}</p>
+            <button 
+              className={styles.callMeetingButton}
+              onClick={handleCallMeeting}
+            >
+              📢 Call Meeting
+            </button>
+          </div>
+        )}
+
+        {showMeetingControls && (
+          <div className={styles.meetingContainer}>
+            <h2 className={styles.meetingTitle}>Meeting in Progress</h2>
+            <div className={styles.meetingButtons}>
+              <button 
+                className={styles.meetingButton}
+                onClick={handleEndMeeting}
+              >
+                Go to Vote
+              </button>
+              <button 
+                className={styles.meetingButton}
+                onClick={handleEndMeeting}
+              >
+                End Meeting
+              </button>
+            </div>
           </div>
         )}
 

@@ -142,3 +142,57 @@
   opacity: 0.8;
 }
 
+.callMeetingButton {
+  margin-top: 2rem;
+  padding: 1.5rem 3rem;
+  font-size: 1.3rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.callMeetingButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+}
+
+.meetingContainer {
+  padding: 3rem 2rem;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 20px;
+  border: 3px solid #3b82f6;
+}
+
+.meetingTitle {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  color: #3b82f6;
+}
+
+.meetingButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.meetingButton {
+  padding: 1.5rem;
+  font-size: 1.3rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.meetingButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+}
+

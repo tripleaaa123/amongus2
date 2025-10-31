@@ -27,6 +27,7 @@ export interface Game {
   createdAt: number;
   sabotageOngoing?: boolean;
   gameEnd?: boolean;
+  meetingCalled?: boolean;
 }
 
 export function generateGameCode(): string {
@@ -225,5 +226,15 @@ export async function resolveSabotage(gameId: string) {
 export async function endGame(gameId: string) {
   const gameRef = doc(db, 'games', gameId);
   await updateDoc(gameRef, { gameEnd: true });
+}
+
+export async function callMeeting(gameId: string) {
+  const gameRef = doc(db, 'games', gameId);
+  await updateDoc(gameRef, { meetingCalled: true });
+}
+
+export async function endMeeting(gameId: string) {
+  const gameRef = doc(db, 'games', gameId);
+  await updateDoc(gameRef, { meetingCalled: false });
 }
 

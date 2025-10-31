@@ -7,6 +7,7 @@ import InfoModal from './components/InfoModal';
 import ScanModal from './components/ScanModal';
 import ActionsModal from './components/ActionsModal';
 import SabotageOverlay from './components/SabotageOverlay';
+import MeetingOverlay from './components/MeetingOverlay';
 import styles from './page.module.css';
 
 export default function TasksPage() {
@@ -117,6 +118,7 @@ export default function TasksPage() {
       )}
 
       {game?.sabotageOngoing && <SabotageOverlay />}
+      {game?.meetingCalled && !game?.sabotageOngoing && <MeetingOverlay />}
     </div>
   );
 }

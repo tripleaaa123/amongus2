@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { subscribeToGame, assignRoles, updateImposterCount, Game } from '@/lib/gameUtils';
 import SabotageOverlay from './tasks/components/SabotageOverlay';
+import MeetingOverlay from './tasks/components/MeetingOverlay';
 import styles from './page.module.css';
 
 export default function GamePage() {
@@ -159,6 +160,7 @@ export default function GamePage() {
         )}
       </div>
       {game?.sabotageOngoing && <SabotageOverlay />}
+      {game?.meetingCalled && !game?.sabotageOngoing && <MeetingOverlay />}
     </div>
   );
 }
