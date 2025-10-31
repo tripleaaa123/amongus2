@@ -6,6 +6,7 @@ import { subscribeToGame, assignRoles, updateImposterCount, Game } from '@/lib/g
 import SabotageOverlay from './tasks/components/SabotageOverlay';
 import MeetingOverlay from './tasks/components/MeetingOverlay';
 import VotingOverlay from './tasks/components/VotingOverlay';
+import EndGameOverlay from './tasks/components/EndGameOverlay';
 import styles from './page.module.css';
 
 export default function GamePage() {
@@ -160,9 +161,12 @@ export default function GamePage() {
           </p>
         )}
       </div>
-      {game?.sabotageOngoing && localPlayer?.alive !== false && <SabotageOverlay />}
-      {game?.meetingCalled && !game?.sabotageOngoing && localPlayer?.alive !== false && <MeetingOverlay />}
-      {game?.votingOngoing && !game?.sabotageOngoing && localPlayer?.alive !== false && (
+      {game?.status === 'finished' && game?.winner && (
+        <EndGameOverlay game={game} />
+      )}
+      {game?.status === 'playing' && game?.sabotageOngoing && localPlayer?.alive !== false && <SabotageOverlay />}
+      {game?.status === 'playing' && game?.meetingCalled && !game?.sabotageOngoing && localPlayer?.alive !== false && <MeetingOverlay />}
+      {game?.status === 'playing' && game?.votingOngoing && !game?.sabotageOngoing && localPlayer?.alive !== false && (
         <VotingOverlay gameId={gameId} playerNickname={playerNickname} />
       )}
     </div>

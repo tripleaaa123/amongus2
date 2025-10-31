@@ -32,6 +32,7 @@ export interface Game {
   meetingCalled?: boolean;
   votingOngoing?: boolean;
   votingEndsAt?: number;
+  winner?: 'imposters' | 'crewmates';
 }
 
 export function generateGameCode(): string {
@@ -217,6 +218,12 @@ export async function completeTask(gameId: string, playerId: string, taskId: str
     imageUrl,
     timestamp: Date.now()
   });
+
+  // Check win conditions after task completion (only for crewmates)
+  const player = gameData.players.find(p => p.id === playerId);
+  if (player?.role === 'crewmate') {
+    await checkWinConditions(gameId);
+  }
 }
 
 export async function triggerSabotage(gameId: string) {
@@ -231,7 +238,12 @@ export async function resolveSabotage(gameId: string) {
 
 export async function endGame(gameId: string) {
   const gameRef = doc(db, 'games', gameId);
-  await updateDoc(gameRef, { gameEnd: true });
+  // When sabotage timer hits 0, imposters win
+  await updateDoc(gameRef, { 
+    gameEnd: true,
+    status: 'finished',
+    winner: 'imposters'
+  });
 }
 
 export async function callMeeting(gameId: string) {
@@ -318,5 +330,59 @@ export async function endVoting(gameId: string) {
     votingOngoing: false,
     votingEndsAt: deleteField()
   });
+
+  // Check win conditions after voting
+  await checkWinConditions(gameId);
+}
+
+export async function checkWinConditions(gameId: string): Promise<boolean> {
+  const gameRef = doc(db, 'games', gameId);
+  const gameSnap = await getDoc(gameRef);
+  
+  if (!gameSnap.exists()) return false;
+
+  const gameData = gameSnap.data() as Game;
+  
+  // Only check if game is still playing
+  if (gameData.status !== 'playing') return false;
+
+  const alivePlayers = gameData.players.filter(p => p.alive !== false);
+  const aliveImposters = alivePlayers.filter(p => p.role === 'imposter');
+  const aliveCrewmates = alivePlayers.filter(p => p.role === 'crewmate');
+
+  let winner: 'imposters' | 'crewmates' | undefined;
+
+  // Condition 1: Imposters >= Crewmates (Imposter win)
+  if (aliveImposters.length >= aliveCrewmates.length && aliveCrewmates.length > 0) {
+    winner = 'imposters';
+  }
+  // Condition 2: All imposters are dead (Crewmate win)
+  else if (aliveImposters.length === 0) {
+    winner = 'crewmates';
+  }
+  // Condition 3: All crewmate tasks completed (Crewmate win)
+  else {
+    const crewmatePlayers = gameData.players.filter(p => p.role === 'crewmate' && p.alive !== false);
+    const allCrewmateTasksCompleted = crewmatePlayers.every(crewmate => {
+      const tasks = crewmate.tasks || [];
+      return tasks.length > 0 && tasks.every(task => task.completed === true);
+    });
+
+    if (allCrewmateTasksCompleted && crewmatePlayers.length > 0) {
+      winner = 'crewmates';
+    }
+  }
+
+  // If there's a winner, end the game
+  if (winner) {
+    await updateDoc(gameRef, {
+      status: 'finished',
+      winner: winner,
+      gameEnd: true
+    });
+    return true;
+  }
+
+  return false;
 }
 

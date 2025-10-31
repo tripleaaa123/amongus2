@@ -9,6 +9,7 @@ import ActionsModal from './components/ActionsModal';
 import SabotageOverlay from './components/SabotageOverlay';
 import MeetingOverlay from './components/MeetingOverlay';
 import VotingOverlay from './components/VotingOverlay';
+import EndGameOverlay from './components/EndGameOverlay';
 import styles from './page.module.css';
 
 export default function TasksPage() {
@@ -120,9 +121,12 @@ export default function TasksPage() {
         />
       )}
 
-      {game?.sabotageOngoing && localPlayer?.alive !== false && <SabotageOverlay />}
-      {game?.meetingCalled && !game?.sabotageOngoing && localPlayer?.alive !== false && <MeetingOverlay />}
-      {game?.votingOngoing && !game?.sabotageOngoing && localPlayer?.alive !== false && (
+      {game?.status === 'finished' && game?.winner && (
+        <EndGameOverlay game={game} />
+      )}
+      {game?.status === 'playing' && game?.sabotageOngoing && localPlayer?.alive !== false && <SabotageOverlay />}
+      {game?.status === 'playing' && game?.meetingCalled && !game?.sabotageOngoing && localPlayer?.alive !== false && <MeetingOverlay />}
+      {game?.status === 'playing' && game?.votingOngoing && !game?.sabotageOngoing && localPlayer?.alive !== false && (
         <VotingOverlay gameId={gameId} playerNickname={playerNickname} />
       )}
     </div>
