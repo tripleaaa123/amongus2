@@ -5,6 +5,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/firebase';
 import { completeTask } from '@/lib/gameUtils';
+import WireGame from './WireGame';
 import styles from './ScanModal.module.css';
 
 interface ScanModalProps {
@@ -20,6 +21,7 @@ export default function ScanModal({ gameId, playerId, playerTasks, onClose, onTa
   const [scannedTaskId, setScannedTaskId] = useState<string | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [showWireGame, setShowWireGame] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -46,7 +48,13 @@ export default function ScanModal({ gameId, playerId, playerTasks, onClose, onTa
           if (task && !task.completed) {
             setScannedTaskId(decodedText);
             html5Qrcode.stop().catch(() => {});
-            setStep('capture');
+            
+            // If task_9, show wire game instead of capture
+            if (decodedText === 'task_9') {
+              setShowWireGame(true);
+            } else {
+              setStep('capture');
+            }
           } else {
             alert('Task not found or already completed!');
           }
@@ -145,6 +153,24 @@ export default function ScanModal({ gameId, playerId, playerTasks, onClose, onTa
     }
   };
 
+  const handleWireGameComplete = async () => {
+    if (!scannedTaskId || scannedTaskId !== 'task_9') return;
+
+    setUploading(true);
+    try {
+      // For task_9, mark as complete with a placeholder identifier
+      await completeTask(gameId, playerId, scannedTaskId, 'wire_game_completed');
+      setShowWireGame(false);
+      onTaskComplete();
+      onClose();
+    } catch (error: any) {
+      console.error('Error completing wire game task:', error);
+      alert('Failed to complete task. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const uploadAndComplete = async () => {
     if (!capturedImage || !scannedTaskId) return;
 
@@ -180,6 +206,20 @@ export default function ScanModal({ gameId, playerId, playerTasks, onClose, onTa
   };
 
   const task = playerTasks.find(t => t.taskId === scannedTaskId);
+
+  // Show wire game if task_9 was scanned
+  if (showWireGame) {
+    return (
+      <WireGame
+        onComplete={handleWireGameComplete}
+        onCancel={() => {
+          setShowWireGame(false);
+          setScannedTaskId(null);
+          onClose();
+        }}
+      />
+    );
+  }
 
   return (
     <div className={styles.overlay} onClick={onClose}>

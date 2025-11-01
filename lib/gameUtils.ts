@@ -131,10 +131,10 @@ export async function getAllTasks(): Promise<Task[]> {
 }
 
 export function getCrewmateTasks(allTasks: Task[]): Task[] {
-  // Return all tasks with IDs task_1 through task_7 (exclude task_8)
+  // Return all tasks with IDs task_1 through task_7 and task_9 (exclude task_8)
   return allTasks.filter(task => {
     const taskNum = parseInt(task.taskId.replace('task_', ''));
-    return taskNum >= 1 && taskNum <= 7;
+    return (taskNum >= 1 && taskNum <= 7) || taskNum === 9;
   }).sort((a, b) => {
     // Sort by task number
     const numA = parseInt(a.taskId.replace('task_', ''));
@@ -164,11 +164,11 @@ export async function assignRoles(gameId: string) {
     throw new Error('No tasks found in database. Please add tasks first.');
   }
 
-  // Get crewmate tasks (task_1 through task_7)
+  // Get crewmate tasks (task_1 through task_7 and task_9)
   const crewmateTasks = getCrewmateTasks(allTasks);
   
-  if (crewmateTasks.length !== 7) {
-    throw new Error(`Expected 7 crewmate tasks (task_1 to task_7), found ${crewmateTasks.length}`);
+  if (crewmateTasks.length !== 8) {
+    throw new Error(`Expected 8 crewmate tasks (task_1 to task_7 and task_9), found ${crewmateTasks.length}`);
   }
 
   // Shuffle players
@@ -178,20 +178,14 @@ export async function assignRoles(gameId: string) {
   }
 
   // Assign roles and tasks
-  // First assign imposters
+  // All players get tasks 1-7 and 9 (task_8 is only for dead crewmates)
   players.forEach((player, index) => {
     if (index < imposterCount) {
       player.role = 'imposter';
-      // Imposters get random tasks to blend in
-      const shuffled = [...allTasks.filter(t => t.taskId !== 'task_8')];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      player.tasks = shuffled.slice(0, 7);
-    } else {
-      // Crewmates and snitch get ALL 7 tasks (task_1 through task_7)
-      player.tasks = crewmateTasks.map((task: Task) => ({ ...task }));
+    }
+    // Everyone gets tasks 1-7 and 9 (including imposters to help them blend in)
+    player.tasks = crewmateTasks.map((task: Task) => ({ ...task }));
+    if (player.role !== 'imposter') {
       player.completedAllTasks = false;
     }
   });
@@ -251,12 +245,12 @@ export async function completeTask(gameId: string, playerId: string, taskId: str
       if (taskId === 'task_8') {
         completedAllTasks = true;
       } else {
-        // Check if all regular tasks (task_1 to task_7) are completed
-        const regularTasks = updatedTasks?.filter(t => {
+        // Check if all required tasks (task_1 to task_7 and task_9) are completed
+        const requiredTasks = updatedTasks?.filter(t => {
           const taskNum = parseInt(t.taskId.replace('task_', ''));
-          return taskNum >= 1 && taskNum <= 7;
+          return (taskNum >= 1 && taskNum <= 7) || taskNum === 9;
         }) || [];
-        completedAllTasks = regularTasks.length > 0 && regularTasks.every(t => t.completed === true);
+        completedAllTasks = requiredTasks.length > 0 && requiredTasks.every(t => t.completed === true);
       }
       
       return { ...p, tasks: updatedTasks, completedAllTasks };
