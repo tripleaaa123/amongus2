@@ -17,6 +17,7 @@ export interface Player {
   tasks?: Task[];
   alive?: boolean;
   vote?: string; // playerId of who they voted for, or 'abstain'
+  completedAllTasks?: boolean;
 }
 
 export interface Game {
@@ -129,15 +130,21 @@ export async function getAllTasks(): Promise<Task[]> {
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Task));
 }
 
-export function assignRandomTasks(allTasks: Task[], count: number): Task[] {
-  // Shuffle tasks
-  const shuffled = [...allTasks];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  // Return first 'count' tasks
-  return shuffled.slice(0, count);
+export function getCrewmateTasks(allTasks: Task[]): Task[] {
+  // Return all tasks with IDs task_1 through task_7 (exclude task_8)
+  return allTasks.filter(task => {
+    const taskNum = parseInt(task.taskId.replace('task_', ''));
+    return taskNum >= 1 && taskNum <= 7;
+  }).sort((a, b) => {
+    // Sort by task number
+    const numA = parseInt(a.taskId.replace('task_', ''));
+    const numB = parseInt(b.taskId.replace('task_', ''));
+    return numA - numB;
+  });
+}
+
+export function getTask8(allTasks: Task[]): Task | null {
+  return allTasks.find(task => task.taskId === 'task_8') || null;
 }
 
 export async function assignRoles(gameId: string) {
@@ -157,6 +164,13 @@ export async function assignRoles(gameId: string) {
     throw new Error('No tasks found in database. Please add tasks first.');
   }
 
+  // Get crewmate tasks (task_1 through task_7)
+  const crewmateTasks = getCrewmateTasks(allTasks);
+  
+  if (crewmateTasks.length !== 7) {
+    throw new Error(`Expected 7 crewmate tasks (task_1 to task_7), found ${crewmateTasks.length}`);
+  }
+
   // Shuffle players
   for (let i = players.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -168,9 +182,18 @@ export async function assignRoles(gameId: string) {
   players.forEach((player, index) => {
     if (index < imposterCount) {
       player.role = 'imposter';
+      // Imposters get random tasks to blend in
+      const shuffled = [...allTasks.filter(t => t.taskId !== 'task_8')];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      player.tasks = shuffled.slice(0, 7);
+    } else {
+      // Crewmates and snitch get ALL 7 tasks (task_1 through task_7)
+      player.tasks = crewmateTasks.map((task: Task) => ({ ...task }));
+      player.completedAllTasks = false;
     }
-    // Everyone gets tasks (including imposters to help them blend in)
-    player.tasks = assignRandomTasks(allTasks, 7);
   });
 
   // Randomly assign one snitch from the non-imposter players
@@ -211,17 +234,34 @@ export async function completeTask(gameId: string, playerId: string, taskId: str
   if (!gameSnap.exists()) return;
 
   const gameData = gameSnap.data() as Game;
-  const players = gameData.players.map(player => {
-    if (player.id === playerId) {
-      const updatedTasks = player.tasks?.map(task => {
+  const player = gameData.players.find(p => p.id === playerId);
+  
+  const players = gameData.players.map(p => {
+    if (p.id === playerId) {
+      const updatedTasks = p.tasks?.map(task => {
         if (task.taskId === taskId) {
           return { ...task, completed: true, proofImageUrl: imageUrl };
         }
         return task;
       });
-      return { ...player, tasks: updatedTasks };
+      
+      let completedAllTasks = p.completedAllTasks || false;
+      
+      // If completing task_8, mark as completed all tasks
+      if (taskId === 'task_8') {
+        completedAllTasks = true;
+      } else {
+        // Check if all regular tasks (task_1 to task_7) are completed
+        const regularTasks = updatedTasks?.filter(t => {
+          const taskNum = parseInt(t.taskId.replace('task_', ''));
+          return taskNum >= 1 && taskNum <= 7;
+        }) || [];
+        completedAllTasks = regularTasks.length > 0 && regularTasks.every(t => t.completed === true);
+      }
+      
+      return { ...p, tasks: updatedTasks, completedAllTasks };
     }
-    return player;
+    return p;
   });
 
   await updateDoc(gameRef, { players });
@@ -231,14 +271,13 @@ export async function completeTask(gameId: string, playerId: string, taskId: str
   await setDoc(proofRef, {
     gameId,
     playerId,
-    playerNickname: gameData.players.find(p => p.id === playerId)?.nickname || '',
+    playerNickname: player?.nickname || '',
     taskId,
     imageUrl,
     timestamp: Date.now()
   });
 
   // Check win conditions after task completion (for crewmates and snitch)
-  const player = gameData.players.find(p => p.id === playerId);
   if (player?.role === 'crewmate' || player?.role === 'snitch') {
     await checkWinConditions(gameId);
   }
@@ -395,15 +434,13 @@ export async function checkWinConditions(gameId: string): Promise<boolean> {
   else if (aliveImposters.length === 0) {
     winner = 'crewmates';
   }
-  // Condition 3: All crewmate tasks completed (Crewmate win) - includes snitch
+  // Condition 3: All crewmate tasks completed (Crewmate win) - includes snitch (dead or alive)
   else {
-    const crewmatePlayers = gameData.players.filter(p => (p.role === 'crewmate' || p.role === 'snitch') && p.alive !== false);
-    const allCrewmateTasksCompleted = crewmatePlayers.every(crewmate => {
-      const tasks = crewmate.tasks || [];
-      return tasks.length > 0 && tasks.every(task => task.completed === true);
-    });
+    const crewmatePlayers = gameData.players.filter(p => p.role === 'crewmate' || p.role === 'snitch');
+    const allCrewmateTasksCompleted = crewmatePlayers.length > 0 && 
+      crewmatePlayers.every(crewmate => crewmate.completedAllTasks === true);
 
-    if (allCrewmateTasksCompleted && crewmatePlayers.length > 0) {
+    if (allCrewmateTasksCompleted) {
       winner = 'crewmates';
     }
   }
@@ -437,8 +474,35 @@ export async function markPlayerAsDead(gameId: string, playerId: string) {
   if (!gameSnap.exists()) return;
 
   const gameData = gameSnap.data() as Game;
+  const allTasks = await getAllTasks();
+  const task8 = getTask8(allTasks);
+  
   const players = gameData.players.map(player => {
     if (player.id === playerId) {
+      // Only handle task reassignment for crewmates and snitch
+      if (player.role === 'crewmate' || player.role === 'snitch') {
+        // Check if they completed all regular tasks (task_1 to task_7)
+        const regularTasks = player.tasks?.filter(t => {
+          const taskNum = parseInt(t.taskId.replace('task_', ''));
+          return taskNum >= 1 && taskNum <= 7;
+        }) || [];
+        
+        const allRegularTasksCompleted = regularTasks.length > 0 && 
+          regularTasks.every(t => t.completed === true);
+        
+        if (!allRegularTasksCompleted && !player.completedAllTasks && task8) {
+          // Remove all tasks and assign only task_8
+          return {
+            ...player,
+            alive: false,
+            tasks: [{ ...task8, completed: false }],
+            completedAllTasks: false
+          };
+        }
+        // If already completed all tasks, just mark as dead
+        return { ...player, alive: false };
+      }
+      // For imposters, just mark as dead
       return { ...player, alive: false };
     }
     return player;
