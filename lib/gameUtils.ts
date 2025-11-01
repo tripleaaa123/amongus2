@@ -450,3 +450,20 @@ export async function markPlayerAsDead(gameId: string, playerId: string) {
   await checkWinConditions(gameId);
 }
 
+export interface Proof {
+  id: string;
+  gameId: string;
+  playerId: string;
+  playerNickname: string;
+  taskId: string;
+  imageUrl: string;
+  timestamp: number;
+}
+
+export async function getGameProofs(gameId: string): Promise<Proof[]> {
+  const proofsRef = collection(db, 'proofs');
+  const q = query(proofsRef, where('gameId', '==', gameId));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Proof));
+}
+

@@ -11,6 +11,7 @@ import MeetingOverlay from './components/MeetingOverlay';
 import VotingOverlay from './components/VotingOverlay';
 import EndGameOverlay from './components/EndGameOverlay';
 import HostEndGameModal from './components/HostEndGameModal';
+import ViewProofsModal from './components/ViewProofsModal';
 import styles from './page.module.css';
 
 export default function TasksPage() {
@@ -26,6 +27,7 @@ export default function TasksPage() {
   const [showScan, setShowScan] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const [showHostEndGame, setShowHostEndGame] = useState(false);
+  const [showViewProofs, setShowViewProofs] = useState(false);
 
   useEffect(() => {
     if (!gameId) return;
@@ -96,9 +98,14 @@ export default function TasksPage() {
             </button>
           )}
           {localPlayer?.isHost && (
-            <button className={styles.hostButton} onClick={() => setShowHostEndGame(true)}>
-              End Game
-            </button>
+            <>
+              <button className={styles.hostButton} onClick={() => setShowViewProofs(true)}>
+                View Proofs
+              </button>
+              <button className={styles.hostButton} onClick={() => setShowHostEndGame(true)}>
+                End Game
+              </button>
+            </>
           )}
         </nav>
       </div>
@@ -133,6 +140,14 @@ export default function TasksPage() {
         <HostEndGameModal
           gameId={gameId}
           onClose={() => setShowHostEndGame(false)}
+        />
+      )}
+
+      {showViewProofs && (
+        <ViewProofsModal
+          gameId={gameId}
+          game={game}
+          onClose={() => setShowViewProofs(false)}
         />
       )}
 
