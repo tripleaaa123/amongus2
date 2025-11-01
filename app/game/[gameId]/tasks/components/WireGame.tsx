@@ -33,29 +33,42 @@ export default function WireGame({ onComplete, onCancel }: WireGameProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
-    // Initialize dots with random colors
+    // Initialize dots with random colors and randomized Y positions
     const shuffledColors = [...COLORS].sort(() => Math.random() - 0.5);
+    
+    // Create vertical positions for left side (randomized order)
+    const leftPositions = [0, 1, 2].sort(() => Math.random() - 0.5);
+    
+    // Create vertical positions for right side (randomized order, independent from left)
+    const rightPositions = [0, 1, 2].sort(() => Math.random() - 0.5);
+    
     const left: Dot[] = [];
     const right: Dot[] = [];
     
+    // Vertical spacing in viewBox coordinates (100 units total height)
+    const verticalSpacing = 100 / 4; // Divide into 4 sections (3 dots + spacing)
+    
     for (let i = 0; i < 3; i++) {
+      // Left side dots at randomized Y positions
       left.push({
         id: i,
-        x: 50,
-        y: 30 + i * 40,
+        x: 15, // Fixed X position for left side
+        y: verticalSpacing * (leftPositions[i] + 1), // Randomized Y position
         color: shuffledColors[i],
         side: 'left'
       });
+      
+      // Right side dots at randomized Y positions
       right.push({
         id: i + 10, // Use different ID range for right side
-        x: 50,
-        y: 30 + i * 40,
+        x: 85, // Fixed X position for right side
+        y: verticalSpacing * (rightPositions[i] + 1), // Randomized Y position
         color: shuffledColors[i],
         side: 'right'
       });
     }
 
-    // Shuffle right side colors to make it a puzzle
+    // Shuffle right side colors to make it a puzzle (don't shuffle positions, already randomized)
     const rightShuffled = [...right].sort(() => Math.random() - 0.5);
     setLeftDots(left);
     setRightDots(rightShuffled);
@@ -72,16 +85,12 @@ export default function WireGame({ onComplete, onCancel }: WireGameProps) {
   const getDotCenter = (dot: Dot, side: 'left' | 'right'): { x: number; y: number } => {
     if (!svgRef.current) return { x: 0, y: 0 };
     
-    const svgRect = svgRef.current.getBoundingClientRect();
-    const svg = svgRef.current;
-    
-    // Get viewBox dimensions (100x100)
+    // Use the stored Y position from the dot object (already randomized)
     const sideOffset = side === 'left' ? 15 : 85;
-    const verticalSpacing = 100 / 4; // Divide into 4 sections (3 dots + spacing)
     
     return {
       x: sideOffset,
-      y: verticalSpacing * ((dot.id % 10) + 1)
+      y: dot.y // Use the randomized Y position stored in the dot
     };
   };
 
