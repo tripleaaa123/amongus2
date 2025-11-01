@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { subscribeToGame, resolveSabotage, endGame, callMeeting, endMeeting, startVoting, Game } from '@/lib/gameUtils';
+import { subscribeToGame, resolveSabotage, endGame, callMeeting, endMeeting, startVoting, markPlayerAsDead, Game } from '@/lib/gameUtils';
 import styles from './page.module.css';
 
 interface Puzzle {
@@ -19,6 +19,7 @@ export default function AccessoryPage() {
   const [puzzles, setPuzzles] = useState<Puzzle[]>([]);
   const [timeLeft, setTimeLeft] = useState(60);
   const [alarmPlaying, setAlarmPlaying] = useState(false);
+  const [showMarkDead, setShowMarkDead] = useState(false);
   const alarmAudioRef = useRef<HTMLAudioElement | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const timerActiveRef = useRef<boolean>(false);
@@ -208,21 +209,64 @@ export default function AccessoryPage() {
     await startVoting(gameId);
   };
 
+  const handleMarkDead = async (playerId: string) => {
+    if (!confirm('Mark this player as dead?')) return;
+    await markPlayerAsDead(gameId, playerId);
+    setShowMarkDead(false);
+  };
+
+  const alivePlayers = game.players.filter(p => p.alive !== false);
+
   return (
     <div className={styles.container}>
       <div className={styles.content}>
         <h1 className={styles.title}>Accessory Device</h1>
         <p className={styles.subtitle}>Game Code: <strong>{game.code}</strong></p>
 
-        {!showPuzzles && !showMeetingControls && (
+        {!showPuzzles && !showMeetingControls && !showMarkDead && (
           <div className={styles.waiting}>
             <p>Waiting for sabotage...</p>
             <p className={styles.status}>Status: {game.sabotageOngoing ? 'SABOTAGE!' : 'Normal'}</p>
-            <button 
-              className={styles.callMeetingButton}
-              onClick={handleCallMeeting}
+            <div className={styles.buttonGroup}>
+              <button 
+                className={styles.callMeetingButton}
+                onClick={handleCallMeeting}
+              >
+                📢 Call Meeting
+              </button>
+              <button 
+                className={styles.markDeadButton}
+                onClick={() => setShowMarkDead(true)}
+              >
+                ☠️ Mark as Dead
+              </button>
+            </div>
+          </div>
+        )}
+
+        {showMarkDead && (
+          <div className={styles.markDeadContainer}>
+            <h2 className={styles.markDeadTitle}>Mark Player as Dead</h2>
+            <p className={styles.markDeadSubtitle}>Select a player to mark as dead:</p>
+            <div className={styles.playerList}>
+              {alivePlayers.map((player) => (
+                <button
+                  key={player.id}
+                  className={styles.playerDeadButton}
+                  onClick={() => handleMarkDead(player.id)}
+                >
+                  <span className={styles.playerDeadName}>{player.nickname}</span>
+                </button>
+              ))}
+            </div>
+            {alivePlayers.length === 0 && (
+              <p className={styles.noPlayers}>No alive players to mark</p>
+            )}
+            <button
+              className={styles.backButton}
+              onClick={() => setShowMarkDead(false)}
             >
-              📢 Call Meeting
+              Back
             </button>
           </div>
         )}

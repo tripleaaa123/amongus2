@@ -430,3 +430,23 @@ export async function endGameManually(gameId: string, winner: 'imposters' | 'cre
   });
 }
 
+export async function markPlayerAsDead(gameId: string, playerId: string) {
+  const gameRef = doc(db, 'games', gameId);
+  const gameSnap = await getDoc(gameRef);
+  
+  if (!gameSnap.exists()) return;
+
+  const gameData = gameSnap.data() as Game;
+  const players = gameData.players.map(player => {
+    if (player.id === playerId) {
+      return { ...player, alive: false };
+    }
+    return player;
+  });
+
+  await updateDoc(gameRef, { players });
+
+  // Check win conditions after marking someone as dead
+  await checkWinConditions(gameId);
+}
+

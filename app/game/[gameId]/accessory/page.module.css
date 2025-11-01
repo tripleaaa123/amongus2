@@ -196,3 +196,102 @@
   box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
 }
 
+.buttonGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.markDeadButton {
+  padding: 1.5rem 3rem;
+  font-size: 1.3rem;
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.markDeadButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(107, 114, 128, 0.3);
+}
+
+.markDeadContainer {
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.markDeadTitle {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #ef4444;
+  text-align: center;
+}
+
+.markDeadSubtitle {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  opacity: 0.9;
+  text-align: center;
+}
+
+.playerList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.playerDeadButton {
+  width: 100%;
+  padding: 1.5rem;
+  font-size: 1.2rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.playerDeadButton:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  transform: translateY(-2px);
+}
+
+.playerDeadName {
+  font-weight: bold;
+}
+
+.noPlayers {
+  text-align: center;
+  font-size: 1.2rem;
+  opacity: 0.8;
+  margin: 2rem 0;
+}
+
+.backButton {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.backButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
