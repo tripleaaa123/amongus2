@@ -131,12 +131,28 @@ export async function getAllTasks(): Promise<Task[]> {
 }
 
 export function getCrewmateTasks(allTasks: Task[]): Task[] {
-  // Return all tasks with IDs task_1 through task_7 and task_9 (exclude task_8)
-  return allTasks.filter(task => {
+  // Get task_9 (always assigned) and tasks 1-7 (for random selection)
+  const task9 = allTasks.find(task => task.taskId === 'task_9');
+  const tasks1to7 = allTasks.filter(task => {
     const taskNum = parseInt(task.taskId.replace('task_', ''));
-    return (taskNum >= 1 && taskNum <= 7) || taskNum === 9;
-  }).sort((a, b) => {
-    // Sort by task number
+    return taskNum >= 1 && taskNum <= 7;
+  });
+  
+  // Shuffle tasks 1-7 and pick 3 random ones
+  const shuffled = [...tasks1to7];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  const randomTasks = shuffled.slice(0, 3);
+  
+  // Combine task_9 with 3 random tasks from 1-7
+  const result: Task[] = [];
+  if (task9) result.push(task9);
+  result.push(...randomTasks);
+  
+  // Sort by task number for consistency
+  return result.sort((a, b) => {
     const numA = parseInt(a.taskId.replace('task_', ''));
     const numB = parseInt(b.taskId.replace('task_', ''));
     return numA - numB;
@@ -164,11 +180,19 @@ export async function assignRoles(gameId: string) {
     throw new Error('No tasks found in database. Please add tasks first.');
   }
 
-  // Get crewmate tasks (task_1 through task_7 and task_9)
-  const crewmateTasks = getCrewmateTasks(allTasks);
+  // Get task_9 (common for everyone) and tasks 1-7 (for random selection)
+  const task9 = allTasks.find(task => task.taskId === 'task_9');
+  if (!task9) {
+    throw new Error('Task 9 not found in database.');
+  }
   
-  if (crewmateTasks.length !== 8) {
-    throw new Error(`Expected 8 crewmate tasks (task_1 to task_7 and task_9), found ${crewmateTasks.length}`);
+  const tasks1to7 = allTasks.filter(task => {
+    const taskNum = parseInt(task.taskId.replace('task_', ''));
+    return taskNum >= 1 && taskNum <= 7;
+  });
+  
+  if (tasks1to7.length < 3) {
+    throw new Error(`Need at least 3 tasks from task_1 to task_7, found ${tasks1to7.length}`);
   }
 
   // Shuffle players
@@ -178,13 +202,30 @@ export async function assignRoles(gameId: string) {
   }
 
   // Assign roles and tasks
-  // All players get tasks 1-7 and 9 (task_8 is only for dead crewmates)
+  // All players get task_9 + 3 random tasks from 1-7 (task_8 is only for dead crewmates)
   players.forEach((player, index) => {
     if (index < imposterCount) {
       player.role = 'imposter';
     }
-    // Everyone gets tasks 1-7 and 9 (including imposters to help them blend in)
-    player.tasks = crewmateTasks.map((task: Task) => ({ ...task }));
+    
+    // Each player gets task_9 + 3 random tasks from 1-7
+    const shuffled = [...tasks1to7];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    const randomTasks = shuffled.slice(0, 3);
+    
+    // Combine task_9 with 3 random tasks
+    const playerTasks: Task[] = [{ ...task9 }, ...randomTasks.map(t => ({ ...t }))];
+    
+    // Sort by task number for consistency
+    player.tasks = playerTasks.sort((a, b) => {
+      const numA = parseInt(a.taskId.replace('task_', ''));
+      const numB = parseInt(b.taskId.replace('task_', ''));
+      return numA - numB;
+    });
+    
     if (player.role !== 'imposter') {
       player.completedAllTasks = false;
     }
@@ -245,12 +286,13 @@ export async function completeTask(gameId: string, playerId: string, taskId: str
       if (taskId === 'task_8') {
         completedAllTasks = true;
       } else {
-        // Check if all required tasks (task_1 to task_7 and task_9) are completed
-        const requiredTasks = updatedTasks?.filter(t => {
+        // Check if all assigned tasks are completed (task_9 is always assigned, plus their 3 random tasks from 1-7)
+        // We check all their assigned tasks (excluding task_8 which is only for dead crewmates)
+        const assignedTasks = updatedTasks?.filter(t => {
           const taskNum = parseInt(t.taskId.replace('task_', ''));
-          return (taskNum >= 1 && taskNum <= 7) || taskNum === 9;
+          return taskNum !== 8; // Exclude task_8 from completion check
         }) || [];
-        completedAllTasks = requiredTasks.length > 0 && requiredTasks.every(t => t.completed === true);
+        completedAllTasks = assignedTasks.length > 0 && assignedTasks.every(t => t.completed === true);
       }
       
       return { ...p, tasks: updatedTasks, completedAllTasks };
@@ -393,15 +435,9 @@ export async function endVoting(gameId: string) {
       
       // Handle task reassignment for crewmates/snitch who didn't complete all tasks
       if ((player.role === 'crewmate' || player.role === 'snitch') && task8) {
-        const regularTasks = player.tasks?.filter(t => {
-          const taskNum = parseInt(t.taskId.replace('task_', ''));
-          return taskNum >= 1 && taskNum <= 7;
-        }) || [];
-        
-        const allRegularTasksCompleted = regularTasks.length > 0 && 
-          regularTasks.every(t => t.completed === true);
-        
-        if (!allRegularTasksCompleted && !player.completedAllTasks) {
+        // Check if they completed all their assigned tasks (task_9 + 3 random from 1-7)
+        // If they didn't complete all tasks, assign task_8
+        if (!player.completedAllTasks) {
           // Remove all tasks and assign only task_8
           updatedPlayer.tasks = [{ ...task8, completed: false }];
           updatedPlayer.completedAllTasks = false;
@@ -498,16 +534,9 @@ export async function markPlayerAsDead(gameId: string, playerId: string) {
     if (player.id === playerId) {
       // Only handle task reassignment for crewmates and snitch
       if (player.role === 'crewmate' || player.role === 'snitch') {
-        // Check if they completed all regular tasks (task_1 to task_7)
-        const regularTasks = player.tasks?.filter(t => {
-          const taskNum = parseInt(t.taskId.replace('task_', ''));
-          return taskNum >= 1 && taskNum <= 7;
-        }) || [];
-        
-        const allRegularTasksCompleted = regularTasks.length > 0 && 
-          regularTasks.every(t => t.completed === true);
-        
-        if (!allRegularTasksCompleted && !player.completedAllTasks && task8) {
+        // Check if they completed all their assigned tasks (task_9 + 3 random from 1-7)
+        // If they didn't complete all tasks, assign task_8
+        if (!player.completedAllTasks && task8) {
           // Remove all tasks and assign only task_8
           return {
             ...player,
