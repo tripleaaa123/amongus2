@@ -381,10 +381,33 @@ export async function endVoting(gameId: string) {
     : [];
 
   // Only kill if there's a clear winner (not a tie)
+  // Get task_8 for crewmates who need it
+  const allTasks = await getAllTasks();
+  const task8 = getTask8(allTasks);
+  
   const players = gameData.players.map(player => {
     if (topVotees.length === 1 && topVotees[0] === player.id && maxVotes > 0) {
+      // Player was voted out - mark as dead
       const updatedPlayer = { ...player, alive: false };
       delete updatedPlayer.vote;
+      
+      // Handle task reassignment for crewmates/snitch who didn't complete all tasks
+      if ((player.role === 'crewmate' || player.role === 'snitch') && task8) {
+        const regularTasks = player.tasks?.filter(t => {
+          const taskNum = parseInt(t.taskId.replace('task_', ''));
+          return taskNum >= 1 && taskNum <= 7;
+        }) || [];
+        
+        const allRegularTasksCompleted = regularTasks.length > 0 && 
+          regularTasks.every(t => t.completed === true);
+        
+        if (!allRegularTasksCompleted && !player.completedAllTasks) {
+          // Remove all tasks and assign only task_8
+          updatedPlayer.tasks = [{ ...task8, completed: false }];
+          updatedPlayer.completedAllTasks = false;
+        }
+      }
+      
       return updatedPlayer;
     }
     // Clear votes for next round

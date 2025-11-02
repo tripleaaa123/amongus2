@@ -22,10 +22,12 @@ export default function ScanModal({ gameId, playerId, playerTasks, onClose, onTa
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [showWireGame, setShowWireGame] = useState(false);
+  const [flashlightOn, setFlashlightOn] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const scannerStreamRef = useRef<MediaStream | null>(null);
 
   const startScanner = async () => {
     try {
@@ -42,12 +44,18 @@ export default function ScanModal({ gameId, playerId, playerTasks, onClose, onTa
           fps: 10,
           qrbox: { width: 250, height: 250 }
         },
-        (decodedText) => {
+        async (decodedText) => {
           // Check if this taskId exists in player's tasks
           const task = playerTasks.find(t => t.taskId === decodedText);
           if (task && !task.completed) {
             setScannedTaskId(decodedText);
             html5Qrcode.stop().catch(() => {});
+            
+            // Stop scanner stream
+            if (scannerStreamRef.current) {
+              scannerStreamRef.current.getTracks().forEach(track => track.stop());
+              scannerStreamRef.current = null;
+            }
             
             // If task_9, show wire game instead of capture
             if (decodedText === 'task_9') {
@@ -63,6 +71,16 @@ export default function ScanModal({ gameId, playerId, playerTasks, onClose, onTa
           // Ignore scanning errors
         }
       );
+      
+      // Get the stream from html5-qrcode for flashlight control
+      // html5-qrcode doesn't expose the stream directly, so we'll use a different approach
+      // We'll access the video element's srcObject if available
+      setTimeout(() => {
+        const videoElement = document.querySelector('#qr-reader video') as HTMLVideoElement;
+        if (videoElement && videoElement.srcObject) {
+          scannerStreamRef.current = videoElement.srcObject as MediaStream;
+        }
+      }, 1000);
     } catch (err) {
       console.error('Scanner error:', err);
       alert('Failed to start camera. Please check permissions.');
@@ -82,6 +100,33 @@ export default function ScanModal({ gameId, playerId, playerTasks, onClose, onTa
         // Ignore clear errors
       }
       scannerRef.current = null;
+    }
+    if (scannerStreamRef.current) {
+      scannerStreamRef.current.getTracks().forEach(track => track.stop());
+      scannerStreamRef.current = null;
+    }
+  };
+
+  const toggleFlashlight = async () => {
+    const stream = scannerStreamRef.current || streamRef.current;
+    if (!stream) return;
+
+    const videoTrack = stream.getVideoTracks()[0];
+    if (!videoTrack) return;
+
+    try {
+      const capabilities = videoTrack.getCapabilities() as MediaTrackCapabilities & { torch?: boolean };
+      if (capabilities.torch) {
+        await videoTrack.applyConstraints({
+          advanced: [{ torch: !flashlightOn } as any]
+        });
+        setFlashlightOn(!flashlightOn);
+      } else {
+        alert('Flashlight is not supported on this device.');
+      }
+    } catch (err) {
+      console.error('Error toggling flashlight:', err);
+      alert('Failed to toggle flashlight.');
     }
   };
 
@@ -231,6 +276,13 @@ export default function ScanModal({ gameId, playerId, playerTasks, onClose, onTa
             <h2>Scan QR Code</h2>
             <p>Point your camera at the task QR code</p>
             <div id="qr-reader" className={styles.qrReader}></div>
+            <button 
+              className={styles.flashlightButton}
+              onClick={toggleFlashlight}
+              aria-label={flashlightOn ? "Turn off flashlight" : "Turn on flashlight"}
+            >
+              {flashlightOn ? "🔦 Flashlight On" : "⚫ Flashlight Off"}
+            </button>
           </div>
         ) : (
           <div className={styles.captureStep}>

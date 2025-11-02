@@ -106,3 +106,35 @@
   padding: 2rem;
 }
 
+.markDeadButton {
+  width: 100%;
+  padding: 1.5rem;
+  font-size: 1.3rem;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-top: 1rem;
+}
+
+.markDeadButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+}
+
+.markDeadButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.warningText {
+  color: #ffd93d;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+  text-align: center;
+  font-weight: 500;
+}
+

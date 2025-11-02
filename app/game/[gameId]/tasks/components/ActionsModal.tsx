@@ -1,19 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { triggerSabotage, Game } from '@/lib/gameUtils';
+import { triggerSabotage, markPlayerAsDead, Game } from '@/lib/gameUtils';
 import styles from './ActionsModal.module.css';
 
 interface ActionsModalProps {
-  role: 'crewmate' | 'imposter' | undefined;
+  role: 'crewmate' | 'imposter' | 'snitch' | undefined;
   gameId: string;
+  playerId: string;
   game: Game | null;
   onClose: () => void;
 }
 
-export default function ActionsModal({ role, gameId, game, onClose }: ActionsModalProps) {
+export default function ActionsModal({ role, gameId, playerId, game, onClose }: ActionsModalProps) {
   const [sabotaging, setSabotaging] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
+  const [markingDead, setMarkingDead] = useState(false);
 
   // Update cooldown timer
   useEffect(() => {
@@ -56,6 +58,24 @@ export default function ActionsModal({ role, gameId, game, onClose }: ActionsMod
     }
   };
 
+  const handleMarkSelfDead = async () => {
+    if (!confirm('Are you sure you want to mark yourself as dead? This cannot be undone.')) {
+      return;
+    }
+
+    setMarkingDead(true);
+    try {
+      await markPlayerAsDead(gameId, playerId);
+      alert('You have been marked as dead.');
+      onClose();
+    } catch (error: any) {
+      console.error('Error marking self as dead:', error);
+      alert(error.message || 'Failed to mark yourself as dead. Please try again.');
+    } finally {
+      setMarkingDead(false);
+    }
+  };
+
   const formatCooldown = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -65,6 +85,7 @@ export default function ActionsModal({ role, gameId, game, onClose }: ActionsMod
   if (!role) return null;
 
   const isImposter = role === 'imposter';
+  const isCrewmate = role === 'crewmate' || role === 'snitch';
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -87,6 +108,19 @@ export default function ActionsModal({ role, gameId, game, onClose }: ActionsMod
             >
               {sabotaging ? 'Triggering...' : cooldownRemaining > 0 ? 'On Cooldown' : game?.sabotageOngoing ? 'Sabotage Active' : '⚡ Sabotage'}
             </button>
+          </div>
+        ) : isCrewmate ? (
+          <div className={styles.crewmateActions}>
+            <h2>Actions</h2>
+            <p className={styles.description}>Manage your player status.</p>
+            <button 
+              className={styles.markDeadButton}
+              onClick={handleMarkSelfDead}
+              disabled={markingDead}
+            >
+              {markingDead ? 'Marking...' : '☠️ Mark Self as Dead'}
+            </button>
+            <p className={styles.warningText}>⚠️ This action cannot be undone</p>
           </div>
         ) : (
           <div className={styles.crewmateActions}>
